@@ -1,96 +1,74 @@
 #include "shell.h" 
   
  /** 
-  * * _getline - read one line from the prompt. 
-  * * @data: struct for the program's data 
-  * * 
-  * * Return: reading counting bytes. 
-  * */ 
- int _getline(data_of_program *data) 
+  * interactive - returns true if shell is interactive mode 
+  * @info: struct address 
+  * 
+  * Return: 1 if interactive mode, 0 otherwise 
+  */ 
+ int interactive(info_t *info) 
  { 
-         char buff[BUFFER_SIZE] = {'\0'}; 
-         static char *array_commands[10] = {NULL}; 
-         static char array_operators[10] = {'\0'}; 
-         ssize_t bytes_read, i = 0; 
-  
-         /* check if doesnot exist more commands in the array */ 
-         /* and checks the logical operators */ 
-         if (!array_commands[0] || (array_operators[0] == '&' && errno != 0) || 
-                 (array_operators[0] == '|' && errno == 0)) 
-         { 
-                 /*free the memory allocated in the array if it exists */ 
-                 for (i = 0; array_commands[i]; i++) 
-                 { 
-                         free(array_commands[i]); 
-                         array_commands[i] = NULL; 
-                 } 
-  
-                 /* read from the file descriptor int to buff */ 
-                 bytes_read = read(data->file_descriptor, &buff, BUFFER_SIZE - 1); 
-                 if (bytes_read == 0) 
-                         return (-1); 
-  
-                 /* split lines for \n or ; */ 
-                 i = 0; 
-                 do { 
-                         array_commands[i] = str_duplicate(_strtok(i ? NULL : buff, "\n;")); 
-                         /*checks and split for && and || operators*/ 
-                         i = check_logic_ops(array_commands, i, array_operators); 
-                 } while (array_commands[i++]); 
-         } 
-  
-         /*obtains the next command (command 0) and remove it for the array*/ 
-         data->input_line = array_commands[0]; 
-         for (i = 0; array_commands[i]; i++) 
-         { 
-                 array_commands[i] = array_commands[i + 1]; 
-                 array_operators[i] = array_operators[i + 1]; 
-         } 
-  
-         return (str_length(data->input_line)); 
+         return (isatty(STDIN_FILENO) && info->readfd <= 2); 
  } 
   
+ /** 
+  * is_delim - checks if character is a delimeter 
+  * @c: the char to check 
+  * @delim: the delimeter string 
+  * Return: 1 if true, 0 if false 
+  */ 
+ int is_delim(char c, char *delim) 
+ { 
+         while (*delim) 
+                 if (*delim++ == c) 
+                         return (1); 
+         return (0); 
+ } 
   
  /** 
-  * * check_logic_ops - checks and split for && and || operators 
-  * * @array_commands: array of the commands. 
-  * * @i: index in the array_commands to be checked 
-  * * @array_operators: array of the logical operators for each previous command 
-  * * 
-  * * Return: index of the last command in the array_commands. 
-  * */ 
- int check_logic_ops(char *array_commands[], int i, char array_operators[]) 
- { 
-         char *temp = NULL; 
-         int j; 
+  *_isalpha - checks for alphabetic character 
+  *@c: The character to input 
+  *Return: 1 if c is alphabetic, 0 otherwise 
+  */ 
   
-         /* checks for the & char in the command line*/ 
-         for (j = 0; array_commands[i] != NULL  && array_commands[i][j]; j++) 
+ int _isalpha(int c) 
+ { 
+         if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) 
+                 return (1); 
+         else 
+                 return (0); 
+ } 
+  
+ /** 
+  *_atoi - converts a string to an integer 
+  *@s: the string to be converted 
+  *Return: 0 if no numbers in string, converted number otherwise 
+  */ 
+  
+ int _atoi(char *s) 
+ { 
+         int i, sign = 1, flag = 0, output; 
+         unsigned int result = 0; 
+  
+         for (i = 0;  s[i] != '\0' && flag != 2; i++) 
          { 
-                 if (array_commands[i][j] == '&' && array_commands[i][j + 1] == '&') 
+                 if (s[i] == '-') 
+                         sign *= -1; 
+  
+                 if (s[i] >= '0' && s[i] <= '9') 
                  { 
-                         /* split the line when chars && was found */ 
-                         temp = array_commands[i]; 
-                         array_commands[i][j] = '\0'; 
-                         array_commands[i] = str_duplicate(array_commands[i]); 
-                         array_commands[i + 1] = str_duplicate(temp + j + 2); 
-                         i++; 
-                         array_operators[i] = '&'; 
-                         free(temp); 
-                         j = 0; 
+                         flag = 1; 
+                         result *= 10; 
+                         result += (s[i] - '0'); 
                  } 
-                 if (array_commands[i][j] == '|' && array_commands[i][j + 1] == '|') 
-                 { 
-                         /* split the line when chars || was found */ 
-                         temp = array_commands[i]; 
-                         array_commands[i][j] = '\0'; 
-                         array_commands[i] = str_duplicate(array_commands[i]); 
-                         array_commands[i + 1] = str_duplicate(temp + j + 2); 
-                         i++; 
-                         array_operators[i] = '|'; 
-                         free(temp); 
-                         j = 0; 
-                 } 
+                 else if (flag == 1) 
+                         flag = 2; 
          } 
-         return (i); 
+  
+         if (sign == -1) 
+                 output = -result; 
+         else 
+                 output = result; 
+  
+         return (output); 
  }

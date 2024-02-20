@@ -1,0 +1,22 @@
+#!/usr/bin/bash
+
+echo -e "	****Running git pull****\n"
+# git pull
+
+echo -e "\nWhat file do you want to add to github?\n  "
+read FILE
+
+git add $FILE
+
+echo -e "What is your commit message?\n   "
+read MESSAGE
+
+
+git commit -m "$MESSAGE"
+
+echo -e "\n	****Ready to push to GitHub****\n"
+
+git push
+
+
+echo -e "\n	****DONE!****\n"
